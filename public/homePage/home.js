@@ -3,8 +3,6 @@ document.getElementById("createAccountForm").addEventListener('submit', async fu
 	
 	const username = document.getElementById('username').value;
 	const password = document.getElementById('password').value;
-
-	console.log("Test");
 	
 	try {
 		const response = await axios({
