@@ -4,19 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account</title>
-    <link rel="stylesheet" href="/public/homePage/home.css">
+    <link rel="stylesheet" href="/homePage/home.css">
 </head>
 <body>
     <div class="container">
         <h1>Create Your Account</h1>
-        <form id="createAccountForm" onsubmit="createAccount(event)">
+        <form id="createAccountForm">
             <input type="text" id="username" placeholder="Username" required>
             <input type="password" id="password" placeholder="Password" required>
-            <button type="submit">Create Account</button>
+            <button id="createAccount" type="submit">Create Account</button>
         </form>
     </div>
 
-		<script src="/public/homePage/home.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+		<script src="/homePage/home.js"></script>
 		
 </body>
 </html>

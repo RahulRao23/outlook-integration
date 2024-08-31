@@ -1,11 +1,28 @@
-function createAccount(event) {
+document.getElementById("createAccountForm").addEventListener('submit', async function(event) {
 	event.preventDefault();
+	
 	const username = document.getElementById('username').value;
 	const password = document.getElementById('password').value;
 
-	// Placeholder code to handle account creation
-	alert("Account created successfully!");
+	console.log("Test");
+	
+	try {
+		const response = await axios({
+				method: 'POST',
+				url: 'http://localhost:3000/create-account',
+				data: {
+						username,
+						password
+				}
+		});
 
-	// After account creation, redirect to the Outlook connection page
-	window.location.href = "outlook_connection.html";
+		if (response.data.redirect) {
+				window.location.href = response.data.redirect;
+		} else {
+				document.body.innerHTML = response.data.html;
+		}
+} catch (error) {
+		console.error("Error during account creation:", error);
+		alert("An error occurred. Please try again.");
 }
+});

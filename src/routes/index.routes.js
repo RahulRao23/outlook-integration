@@ -1,22 +1,19 @@
 const express = require('express');
 const {
-	debug,
-	signUp,
-	getAllUsers
-} = require('../controllers/user.controller');
+	createAccount,
+	homePage,
+	linkAccountPage,
+} = require('../controllers/index.controller');
 
 const getRequestParamsMiddleware = require('../middlewares/getRequestParams.middleware');
 
 const router = express.Router();
 
-/* User Routes */
-router.get('/debug', debug);
+router.get('/', homePage);
 
-router.get('/', );
+router.get('/link-options', linkAccountPage);
 
-router.get('/getAllUsers', getAllUsers);
-
-router.post('/signUp', getRequestParamsMiddleware, signUp);
+router.post('/create-account', getRequestParamsMiddleware, createAccount);
 
 /* Error handling */
 router.use('/', (req, res, next) => {

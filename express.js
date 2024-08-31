@@ -3,9 +3,10 @@ const express = require('express');
 const session = require('express-session');
 const http = require('http');
 const { Server } = require('socket.io');
-const ROUTES = require('./src/utilities/imports/routes')();
+const router = require('./src/routes/index.routes');
 const path = require('path');
 const minify = require('express-minify');
+const bodyParser = require('body-parser');
 
 const { dbConnect } = require('./config/dbConnect');
 const { setQueryParams } = require('./src/sockets/middlewares');
@@ -23,8 +24,8 @@ dbConnect();
 
 app.enable('trust proxy');
 app.set('io', io);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json()); // To parse JSON bodies
 
 app.use(minify());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -34,12 +35,8 @@ app.use(session({
 	saveUninitialized: true
 }));
 
-/* Get all routes */
-for (let index = 0; index < ROUTES.length; index++) {
-	const ROUTE = require("./src/routes/" + ROUTES[index]);
-	const SUB_ROUTE = "/" + ROUTES[index].split(".")[0];
-	app.use(SUB_ROUTE, ROUTE);
-}
+app.use('/', router);
+
 /* Socket Middlerware */
 io.use(setQueryParams);
 
