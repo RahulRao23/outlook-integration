@@ -152,6 +152,7 @@ const fetchDeltaEmails = async (emailAddress, accessToken, deltaLink) => {
 									subject: email.subject,
 									sender: String(email.sender.emailAddress.address),
 									from: String(email.from.emailAddress.address),
+									to: emailAddress,
 									change_key: email.changeKey,
 									received_date_time: email.receivedDateTime,
 									importance: email.importance,
