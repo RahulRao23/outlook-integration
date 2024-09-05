@@ -247,7 +247,7 @@ function triggerSyncMail() {
 
 // Set an interval to trigger sync every 5 seconds
 setInterval(triggerSyncPercentage, 5000);
-setInterval(triggerSyncMail, 30000);
+setInterval(triggerSyncMail, 20000);
 
 // Simulate real-time updates
 // setInterval(updateEmailList, 5000);
