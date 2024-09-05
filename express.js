@@ -9,10 +9,9 @@ const minify = require('express-minify');
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const OAuth2Strategy = require('passport-oauth2');
-const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-const { dbConnect } = require('./config/dbConnect');
+const { verifyOAuth2Strategy } = require('./src/utilities/oauth/authentication');
 const { setQueryParams } = require('./src/sockets/middlewares');
 
 const PORT = 3000;
@@ -22,9 +21,6 @@ const socketHandler = require('./src/sockets/index');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-
-/* Establish DB connection */
-dbConnect();
 
 app.enable('trust proxy');
 app.set('io', io);
@@ -45,35 +41,20 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // OAuth2 strategy configuration
-passport.use(new OAuth2Strategy({
-	authorizationURL: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-	tokenURL: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-	clientID: process.env.CLIENT_ID,
-	clientSecret: process.env.CLIENT_SECRET,
-	callbackURL: process.env.REDIRECT_URI,
-	scope: ['openid', 'profile', 'email', 'Mail.ReadWrite', 'Mail.Read', 'offline_access'],
-	state: true
-},
-async (accessToken, refreshToken, params, profile, done) => {
-	try {
-		const idToken = params.id_token;
-		const decoded = jwt.decode(idToken);
-		
-		const user = {
-			id: decoded.sub,
-			displayName: decoded.name,
-			email: decoded.preferred_username,
-			accessToken,
-			refreshToken
-		};
-		
-		return done(null, user);
-	} catch (error) {
-		console.error('Error decoding token:', error);
-		return done(error);
-	}
-}
-));
+passport.use(
+	new OAuth2Strategy(
+		{
+			authorizationURL: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+			tokenURL: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+			clientID: process.env.CLIENT_ID,
+			clientSecret: process.env.CLIENT_SECRET,
+			callbackURL: process.env.REDIRECT_URI,
+			scope: ['openid', 'profile', 'email', 'Mail.ReadWrite', 'Mail.Read', 'Mail.ReadBasic', 'offline_access'],
+			state: true
+		},
+		verifyOAuth2Strategy
+	)
+);
 
 // Serialize user info into session
 passport.serializeUser((user, done) => {
@@ -87,11 +68,22 @@ passport.deserializeUser((user, done) => {
 
 app.use('/', router);
 
-/* Socket Middlerware */
-io.use(setQueryParams);
+/* Socket.IO Middleware */
+io.use((socket, next) => {
+	// Attach session middleware to the Socket.IO handshake
+	session({
+		secret: process.env.SECRET_KEY,
+		resave: false,
+		saveUninitialized: true
+	})(socket.request, socket.request.res || {}, next);
+});
 
 io.on('connection', socket => {
 	console.log('Socket connected: ', socket.id);
+
+	// Access session data
+	const session = socket.request.session;
+	console.log('Session data:', session);
 
 	socket.on('debug', () => {
 		io.emit('debug', 'socket successful');

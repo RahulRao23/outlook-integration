@@ -3,8 +3,14 @@ const passport = require('passport');
 const {
 	homePage,
 	dataPage,
+	authMicrosoft,
+	authMicrosoftCallback,
 	createAccount,
 	logout,
+	getOutlookFolders,
+	getOutlookMails,
+	outlookSyncDelta,
+	initialSync,
 } = require('../controllers/index.controller');
 
 const getRequestParamsMiddleware = require('../middlewares/getRequestParams.middleware');
@@ -15,18 +21,24 @@ router.get('/', homePage);
 
 router.post('/create-account', getRequestParamsMiddleware, createAccount);
 
-router.get('/auth/microsoft', passport.authenticate('oauth2'));
+router.get('/auth/microsoft-authorize/:userId', authMicrosoft);
 
-router.get('/auth/microsoft/callback', passport.authenticate('oauth2', { failureRedirect: '/' }), dataPage);
+router.get('/auth/microsoft/callback', authMicrosoftCallback);
 
-router.get('/dashboard', (req, res) => {
-	if (!req.isAuthenticated()) {
-			return res.redirect('/');
-	}
-	res.send(`Hello, ${req.user.displayName}! Your email is ${req.user.email}. ${req.user}`);
-});
+router.get('/dashboard', dataPage);
+
+router.get('/session', (req, res) => { res.send(req.session) });
+
+router.get('/outlook-folders', getOutlookFolders);
+
+router.get('/outlook-emails', getOutlookMails);
+
+router.get('/outlook-sync', outlookSyncDelta);
+
+router.get('/outlook-initial-sync', initialSync);
 
 router.get('/logout', logout);
+
 
 /* Error handling */
 router.use('/', (req, res, next) => {
