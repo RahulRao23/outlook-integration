@@ -81,6 +81,18 @@ const checkUserExists = async (userId) => {
   });
 }
 
+const deleteUserById = async (id) => {
+  try {
+    await client.delete({
+      index: 'users',
+      id: id
+    });
+    return;
+  } catch (error) {
+    console.error('Error deleting document:', error);
+  }
+}
+
 module.exports = {
 	createUser,
 	bulkInsert,
@@ -88,4 +100,5 @@ module.exports = {
 	searchData,
 	updateData,
 	checkUserExists,
+  deleteUserById,
 }

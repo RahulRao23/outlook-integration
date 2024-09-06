@@ -1,4 +1,4 @@
-const { bulkInsert, getData, updateData } = require('../elasticSearch/emails.services');
+const { bulkInsert, getData, updateData, deleteAllDocuments } = require('../elasticSearch/emails.services');
 
 require('dotenv').config();
 const axios = require('axios');
@@ -64,7 +64,7 @@ const initialEmailSync = async (emailAddress, accessToken) => {
 				);
 			});
 
-			console.log(emailData[0], emailData[1], emailData.length);
+			// console.log(emailData[0], emailData[1], emailData.length);
 			
 			await bulkInsert(emailData);
 
@@ -81,7 +81,7 @@ const getTotalMailCount = async (accessToken) => {
 		const response = await axios.get(link, {
 			headers: { Authorization: `Bearer ${accessToken}` }
 		});
-		console.log(response.data);
+		// console.log(response.data);
 		return response.data;
 	} catch (error) {
 		console.log("Mail Count Error: ", error);
@@ -111,6 +111,8 @@ const fetchDeltaEmails = async (emailAddress, accessToken, deltaLink) => {
 	let nextLink = deltaLink || 'https://graph.microsoft.com/v1.0/me/messages?$top=50';  // 'https://graph.microsoft.com/v1.0/me/delta';
 
 	try {
+		await deleteAllDocuments();
+		
 		while (nextLink) {
 			const response = await axios.get(nextLink, {
 				headers: { Authorization: `Bearer ${accessToken}` }
@@ -118,60 +120,33 @@ const fetchDeltaEmails = async (emailAddress, accessToken, deltaLink) => {
 
 			const emails = response.data.value;
 
-			const insertData = [], promiseArray = [];
+			const insertData = [];
 
-			await Promise.all(
-				emails.map(async (email) => {
-					const emailDetails = await getData(email.id);
-					if (!emailDetails) {
-						insertData.push(
-							{ index: { _index: 'emails', _id: email.id } },
-							{
-								subject: email.subject,
-								sender: String(email.sender.emailAddress.address),
-								from: String(email.from.emailAddress.address),
-								to: emailAddress,
-								change_key: email.changeKey,
-								received_date_time: email.receivedDateTime,
-								importance: email.importance,
-								parent_folder: email.parentFolderId,
-								conversation_id: email.conversationId,
-								is_read: email.isRead,
-								is_draft: email.isDraft,
-								created_at: email.createdDateTime,
-								sent_date: email.sentDateTime,
-								received_date: email.receivedDateTime,
-								complete_data: { ...email },
-							}
-						);
-					} else {
-						promiseArray.push(
-							updateData(
-								email.id, 
-								{
-									subject: email.subject,
-									sender: String(email.sender.emailAddress.address),
-									from: String(email.from.emailAddress.address),
-									to: emailAddress,
-									change_key: email.changeKey,
-									received_date_time: email.receivedDateTime,
-									importance: email.importance,
-									parent_folder: email.parentFolderId,
-									conversation_id: email.conversationId,
-									is_read: email.isRead,
-									is_draft: email.isDraft,
-									created_at: email.createdDateTime,
-									sent_date: email.sentDateTime,
-									received_date: email.receivedDateTime,
-									complete_data: { ...email },
-								}
-							)
-						);
+			emails.map((email) => {
+				// const emailDetails = await getData(email.id);
+				console.log("Email info: ", email.id, email.subject);
+				insertData.push(
+					{ index: { _index: 'emails', _id: email.id } },
+					{
+						subject: email.subject,
+						sender: String(email.sender.emailAddress.address),
+						from: String(email.from.emailAddress.address),
+						to: emailAddress,
+						change_key: email.changeKey,
+						received_date_time: email.receivedDateTime,
+						importance: email.importance,
+						parent_folder: email.parentFolderId,
+						conversation_id: email.conversationId,
+						is_read: email.isRead,
+						is_draft: email.isDraft,
+						created_at: email.createdDateTime,
+						sent_date: email.sentDateTime,
+						received_date: email.receivedDateTime,
+						complete_data: { ...email },
 					}
-				})
-			);
+				);
+			});
 			if (insertData.length) await bulkInsert(insertData);
-			if (promiseArray.length) await Promise.all(promiseArray);
 			
 			nextLink = response.data['@odata.nextLink'] || response.data['@odata.deltaLink'];
 		}

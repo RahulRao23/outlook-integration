@@ -1,5 +1,8 @@
 let userId = '';
 let isInitialSyncComplete = false;
+let isSyncInProgress = true;
+let currentFolderId = '';
+let timer = 30;
 
 async function initalSync() {
 	const response = await axios.get('http://localhost:3000/outlook-initial-sync');
@@ -22,33 +25,6 @@ async function fetchEmailsAfterSync(folderId, page = 1, pageSize = 5) {
 	return response.data;
 }
 
-// function renderFolders(folders) {
-// 	const sidenav = document.getElementById('sidenav');
-// 	sidenav.innerHTML = ''; // Clear the existing folder list
-
-// 	folders.forEach(folder => {
-// 		const folderButton = document.createElement('button');
-// 		folderButton.textContent = folder.folder_title;
-// 		folderButton.classList.add('folder-button'); // Add a class for styling
-
-// 		// Add event listener to handle folder selection and trigger API call
-// 		folderButton.addEventListener('click', () => {
-// 			axios.get(`http://localhost:3000/outlook-emails/?folder_id=${folder.folder_id}`)
-// 				.then(response => response.data.email_data)
-// 				.then(data => {
-// 					if (data.length)
-// 						renderEmails(data);
-// 				})
-// 				.catch(error => {
-// 					console.error('Error fetching folder data:', error);
-// 				});
-// 		});
-
-// 		// Append the folder button to the side navigation
-// 		sidenav.appendChild(folderButton);
-// 	});
-// }
-
 function renderFolders(folders) {
   const sidenav = document.getElementById('sidenav');
   const folderTitle = document.querySelector('p'); // Update the <p>test</p> element
@@ -63,6 +39,7 @@ function renderFolders(folders) {
     // Add event listener to handle folder selection and trigger API call
     folderButton.addEventListener('click', async () => {
       folderTitle.textContent = folder.folder_title; // Update the <p> with the selected folder title
+      currentFolderId = folder.folder_id;
       const { email_data, total_pages } = await fetchEmails(folder.folder_id);
       if (email_data.length) {
         renderEmails(email_data);
@@ -72,6 +49,12 @@ function renderFolders(folders) {
 
     sidenav.appendChild(folderButton);
   });
+}
+
+function clearEmailList() {
+  const emailList = document.getElementById('emailList');
+  emailList.innerHTML = '';
+  return emailList;
 }
 
 function renderEmails(emails) {
@@ -142,32 +125,13 @@ async function fetchAndRenderEmails(folderId, page = 1) {
     if (email_data.length) {
       renderEmails(email_data);
       renderPaginationControls(folderId, page, total_pages);
+    } else {
+      clearEmailList();
     }
   } catch (error) {
     console.error('Error fetching emails for pagination:', error);
   }
 }
-
-// async function fetchAndRenderEmails(folderId, page = 1) {
-//   const { email_data, total_pages } = await fetchEmails(folderId, page);
-
-//   if (email_data.length) {
-//     renderEmails(email_data);
-//     renderPaginationControls(folderId, page, total_pages);
-//   }
-// }
-
-// async function init() {
-// 	const folders = await fetchFolders();
-// 	console.log(folders);
-
-// 	renderFolders(folders);
-
-// 	const emails = await fetchEmails(folders[0].folder_id);
-// 	if (emails.length)
-// 		fetchAndRenderEmails(emails);
-// 		// renderEmails(emails);
-// }
 
 async function init() {
   try {
@@ -183,7 +147,8 @@ async function init() {
     // Default to the first folder
     if (folders.length > 0) {
       const firstFolderId = folders[0].folder_id;
-      const { email_data, total_pages } = await fetchEmails(firstFolderId);
+      currentFolderId = firstFolderId;
+      const { email_data, total_pages } = await fetchEmails(currentFolderId);
 
       if (email_data.length) {
         renderEmails(email_data);
@@ -206,13 +171,16 @@ async function sync() {
 
     // Default to the first folder
     if (folders.length > 0) {
-      const firstFolderId = folders[0].folder_id;
-      const { email_data, total_pages } = await fetchEmailsAfterSync(firstFolderId);
+      // const firstFolderId = folders[0].folder_id;
+      // currentFolderId = firstFolderId;
+      const { email_data, total_pages } = await fetchEmailsAfterSync(currentFolderId);
 
       if (email_data.length) {
         renderEmails(email_data);
         renderPaginationControls(firstFolderId, 1, total_pages);
         document.getElementById('folderTitle').textContent = folders[0].folder_title; // Update the folder title
+      } else {
+        clearEmailList();
       }
     }
   } catch (error) {
@@ -229,25 +197,33 @@ const socket = io('http://localhost:3000'); // Replace with your server URL
 socket.on('syncProgressPercentage', (data) => {
 	const { percentage } = data;
 	console.log("Sync Percentage: ", data);
-	
+  if (percentage >= 100) {
+    isSyncInProgress = false;
+  }
 	document.getElementById('syncProgress').innerText = `Sync Progress: ${percentage}%`;
 });
 
+function syncTimer() {
+  timer = ((timer - 1) < 0) ? 30 : timer - 1;
+  document.getElementById('syncTime').innerText = `Sync in: ${timer} seconds`;
+}
+
 // Function to emit a sync request every 5 seconds
 function triggerSyncPercentage() {
-	socket.emit('requestSyncPercentage', { user_id: userId });
+  // if (isSyncInProgress) {
+    socket.emit('requestSyncPercentage', { user_id: userId });
+  // }
 }
 
 function triggerSyncMail() {
 	if (isInitialSyncComplete) {
 		console.log("Trigger sync Mails");
+    timer = 30;
 		sync();
 	}
 }
 
 // Set an interval to trigger sync every 5 seconds
 setInterval(triggerSyncPercentage, 5000);
-setInterval(triggerSyncMail, 20000);
-
-// Simulate real-time updates
-// setInterval(updateEmailList, 5000);
+setInterval(triggerSyncMail, 30000);
+setInterval(syncTimer, 1000);

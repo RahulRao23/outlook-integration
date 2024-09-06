@@ -19,19 +19,6 @@ const insertData = async (data) => {
 };
 
 const bulkInsert = async (emailData) => {
-  // const bulkBody = [
-  //   { index: { _index: index, _id: '1' } },
-  //   { name: 'John Doe', age: 30, occupation: 'Software Developer' },
-    
-  //   // Second document
-  //   { index: { _index: index, _id: '2' } }, // Action metadata
-  //   { name: 'Jane Doe', age: 28, occupation: 'Data Scientist' }, // Document body
-
-  //   // Add more documents as needed...
-  // ];
-
-  console.log(emailData[0], emailData[1]);
-
   try {
     const response = await client.bulk({ refresh: true, body: emailData });
     
@@ -51,9 +38,10 @@ const getData = async (id) => {
       index: index,
       id: id,
     });
-    console.log('Document retrieved:', response._source);
+    return response._source;
   } catch (error) {
     console.error('Error retrieving document:', error);
+    return false;
   }
 };
 
@@ -66,7 +54,6 @@ const searchEmailData = async (query, page, size) => {
       from: (page - 1) * size,
       size: size,
     });
-    console.log('Search results:', response);
     const totalCount = Number(response.hits.total.value / size);
     return {email_data: response?.hits?.hits, total_pages: totalCount};
   } catch (error) {
@@ -80,7 +67,6 @@ const getCount = async (query) => {
       index: index,
       query: query,
     });
-    console.log('Search results:', response);
     return response;
   } catch (error) {
     console.error('Error searching documents:', error);
@@ -96,6 +82,22 @@ const updateData = async (emailId, emailDetails) => {
 	})
 }
 
+const deleteAllDocuments = async () => {
+  try {
+    const response = await client.deleteByQuery({
+      index: index,
+      body: {
+        query: {
+          match_all: {}
+        }
+      }
+    });
+    return;
+  } catch (error) {
+    console.error('Error deleting documents:', error);
+  }
+}
+
 module.exports = {
 	insertData,
 	bulkInsert,
@@ -103,4 +105,5 @@ module.exports = {
 	searchEmailData,
   getCount,
   updateData,
+  deleteAllDocuments,
 }

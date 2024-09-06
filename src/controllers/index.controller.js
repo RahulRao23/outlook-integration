@@ -13,12 +13,15 @@ const {
 	searchData, 
 	updateData,
 	getData,
+	deleteUserById,
 } = require('../services/elasticSearch/user.services');
 
 const {
 	searchEmailData,
 } =
 require('../services/elasticSearch/emails.services');
+
+const dbScript = require('../../dbSetupScript');
 
 const {
 	initialEmailSync,
@@ -59,14 +62,15 @@ async function authMicrosoftCallback(req, res, next) {
 
 		passport.authenticate('oauth2', async (err, user, info) => {
 				if (err) {
-						console.error('Passport authentication error:', err);
-						return next(err);
+					console.error('Passport authentication error:', err);
+					return next(err);
 				}
 				console.log("callback", {user});
 				
 				if (!user) {
-						console.error('User not authenticated:', info);
-						return res.redirect('/');
+					console.error('User not authenticated:', info);
+					await deleteUserById(req.session.user_id);
+					return res.redirect('/');
 				}
 				console.log('User authenticated:', {callback_user_id: user.outlook_id});
 
@@ -104,6 +108,9 @@ async function createAccount(req, res) {
 				message: 'Required data not sent',
 			});
 		}
+
+		// Create tables if not created
+		await dbScript();
 
 		const [userDetails] = await searchData({
 			query: {
