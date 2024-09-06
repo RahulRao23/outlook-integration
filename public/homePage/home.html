@@ -1,23 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account</title>
-    <link rel="stylesheet" href="/homePage/home.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Create Your Account</h1>
-        <form id="createAccountForm">
-            <input type="text" id="username" placeholder="Username" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button id="createAccount" type="submit">Create Account</button>
-        </form>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-		<script src="/homePage/home.js"></script>
-		
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Create Account</title>
+	<link rel="stylesheet" href="/homePage/home.css">
+</head>
+
+<body>
+	<div class="container">
+		<h1>Create Your Account</h1>
+		<form id="createAccountForm">
+			<input type="text" id="username" placeholder="Username" required>
+			<input type="password" id="password" placeholder="Password" required>
+			<button id="createAccount" type="submit">Create Account</button>
+		</form>
+
+		<div>
+			<p>If the entered Username and Password already exists in local database and outlook account is linked</p>
+			<p>existing user will be redirected to Dashboard</p>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+	<script src="/homePage/home.js"></script>
+
 </body>
+
 </html>

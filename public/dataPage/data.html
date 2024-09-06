@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Dashboard</title>
+  <link rel="stylesheet" href="/dataPage/data.css">
+</head>
+<body>
+
+  <!-- Side Navigation -->
+  <div class="sidenav" id="sidenav">
+    <h2 style="color: white; text-align: center;">Folders</h2>
+    <!-- API content will be populated here -->
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <h1>Email Dashboard</h1>
+    <p id="folderTitle">Test</p>
+    <ul class="email-list" id="emailList"></ul>
+    <div id="pagination"></div>
+    <div id="syncProgress">Sync Progress: 0%</div>
+    <div id="syncTime">Sync in: 30 seconds</div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+  <script src="/dataPage/data.js"></script>
+
+</body>
+</html>
