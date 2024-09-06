@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  elastic-search:
+    image: elasticsearch:8.15.0
+    container_name: elastic-search
+    environment:
+      - "discovery.type=single-node"
+      - "xpack.security.enabled=false"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+       - ./es_data:/usr/share/elasticsearch/data
+    mem_limit: 2g
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  nodeapp:
+    image: nodeapp
+    container_name: nodeapp-v1
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - elastic-search
